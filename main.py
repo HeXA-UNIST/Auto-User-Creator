@@ -44,7 +44,7 @@ def send_email(email_addr, uid, password):
     smtp.sendmail('admin@hexa.pro', email_addr, msg.as_string())
     smtp.quit()
     
-@bot.command("계정내놔")
+@bot.command("계정주세요")
 async def hi(ctx):
     def check_instant_return(message):
         return message.author == ctx.author and not message.author.bot 
