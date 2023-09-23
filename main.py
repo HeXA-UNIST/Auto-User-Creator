@@ -18,6 +18,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 EMAIL_APP_KEY = os.getenv('EMAIL_KEY')
 MAXIMUM_RETRY = 3
 BOT_NAME = "HeXA user creator#2001"
+TARGET_CHANNEL_ID = 1155130805975253094
 
 bot = commands.Bot(command_prefix='/', intents=None)
 client = discord.Client(intents=None)
@@ -111,5 +112,9 @@ async def hi(ctx):
     # 5. Print user info
     send_email(email, username, password)
     await ctx.send(f"User {username}(owned by {person_name}) has been created on {current_time}!\nthe password was sent to {email}")
+    
+    # After successfully creating the user and inserting into the DB
+    target_channel = bot.get_channel(TARGET_CHANNEL_ID)
+    await target_channel.send(f"User {username}(owned by {person_name} / {email}) has been created on {current_time}.")
 
 bot.run(TOKEN)
