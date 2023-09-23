@@ -56,7 +56,7 @@ async def hi(ctx):
             person_name = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
             person_name = person_name.content
 
-            await ctx.send("Please provide your email:")
+            await ctx.send("Please provide your UNIST email:")
             email_msg = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
             email = email_msg.content
 
