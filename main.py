@@ -1,8 +1,11 @@
-import os, discord, sqlite3, subprocess, random, string, smtplib, re, ssl, asyncio
+import os, subprocess, random, string, re
+import smtplib, ssl
+from email.mime.text import MIMEText
+import sqlite3
+import discord, asyncio
 from discord.ext import commands
 from dotenv import load_dotenv
 from datetime import datetime
-from email.mime.text import MIMEText # Load environment variables
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -35,24 +38,19 @@ def send_email(email_addr, uid, password):
     smtp.sendmail('admin@hexa.pro', email_addr, msg.as_string())
     smtp.quit()
     
-def passwd_list_gen():
-    try:
-        passwd_file = open('/etc/passwd', 'r')
-        passwd_lines = passwd_file.readlines()
-        passwd_file.close()
+def load_users_from_passwd():
+    passwd_file = open('/etc/passwd', 'r')
+    passwd_lines = passwd_file.readlines()
+    passwd_file.close()
+    
+    user_list = []
+    
+    for line in passwd_lines:
+        fields = line.strip().split(':')
+        user_list.append(fields[0])
         
-        passwd_list = []
-        
-        for line in passwd_lines:
-            fields = line.strip().split(':')
-            passwd_list.append(fields[0])
-            
-        return passwd_list
-        
-    except Exception as e:
-        error_msg = f"Error : {e}"
-        return error_msg
-                        
+    return user_list
+    
 
 @bot.command("계정주세요")
 async def hi(ctx):
@@ -90,14 +88,18 @@ async def hi(ctx):
             username_msg = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
             username = username_msg.content
             
-            # 2.2 Valid username
-            passwd_list = passwd_list_gen()
-            if type(passwd_list) != list:
-                await ctx.send(f"Error: {passwd_list}")
+            # 2.2 Validate username
+            # 2.2.1 Check if email already exists in DB
+            c.execute("SELECT * FROM users WHERE email=?", (email,))
+            existing_user = c.fetchone()
+            if existing_user:
+                await ctx.send(f"The user {email}({existing_user[0]}) is already enrolled.")
                 return
-            
+
+            user_list = load_users_from_passwd()
+
             retry = 0
-            while username in passwd_list:
+            while username in user_list and retry < MAXIMUM_RETRY:
                 await ctx.send(f"Username {username} already exists.")
                 
                 username_msg = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
@@ -108,19 +110,10 @@ async def hi(ctx):
             if retry == MAXIMUM_RETRY:
                 await ctx.send(f"Invalid username: {username}")
                 return
-                
-            
-                        
+
         except asyncio.TimeoutError:
             await ctx.send("Timeout")
             return
-        
-        # 2.2 Check if email already exists in DB
-        # c.execute("SELECT * FROM users WHERE email=?", (email,))
-        # existing_user = c.fetchone()
-        # if existing_user:
-        #     await ctx.send(f"The user {email}({existing_user[0]}) is already enrolled.")
-        #     return
         
         # 2.3 Extract the part before "@"
         splitter_i = email.find("@") # assert != -1
