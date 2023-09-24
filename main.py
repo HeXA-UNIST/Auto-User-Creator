@@ -1,17 +1,8 @@
-import os
-import discord
-import sqlite3
+import os, discord, sqlite3, subprocess, random, string, smtplib, re, ssl, asyncio
 from discord.ext import commands
 from dotenv import load_dotenv
-import subprocess
-import random
-import string
 from datetime import datetime
-import smtplib
 from email.mime.text import MIMEText # Load environment variables
-import re
-import ssl
-import asyncio
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -44,6 +35,25 @@ def send_email(email_addr, uid, password):
     smtp.sendmail('admin@hexa.pro', email_addr, msg.as_string())
     smtp.quit()
     
+def passwd_list_gen():
+    try:
+        passwd_file = open('/etc/passwd', 'r')
+        passwd_lines = passwd_file.readlines()
+        passwd_file.close()
+        
+        passwd_list = []
+        
+        for line in passwd_lines:
+            fields = line.strip().split(':')
+            passwd_list.append(fields[0])
+            
+        return passwd_list
+        
+    except Exception as e:
+        error_msg = f"Error : {e}"
+        return error_msg
+                        
+
 @bot.command("계정주세요")
 async def hi(ctx):
     try:
@@ -67,13 +77,40 @@ async def hi(ctx):
                 await ctx.send("Please provide your email:")
 
                 email_msg = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
-
                 email = email_msg.content
+                
                 retry += 1
+                
             if retry == MAXIMUM_RETRY:
                 await ctx.send(f"Invalid format of email: {email}")
                 return
             
+            
+            await ctx.send("Please provide your username for using in the server:")
+            username_msg = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
+            username = username_msg.content
+            
+            # 2.2 Valid username
+            passwd_list = passwd_list_gen()
+            if type(passwd_list) != list:
+                await ctx.send(f"Error: {passwd_list}")
+                return
+            
+            retry = 0
+            while username in passwd_list:
+                await ctx.send(f"Username {username} already exists.")
+                
+                username_msg = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
+                username = username_msg.content
+                
+                retry += 1
+                
+            if retry == MAXIMUM_RETRY:
+                await ctx.send(f"Invalid username: {username}")
+                return
+                
+            
+                        
         except asyncio.TimeoutError:
             await ctx.send("Timeout")
             return
