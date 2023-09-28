@@ -114,11 +114,7 @@ async def hi(ctx):
         except asyncio.TimeoutError:
             await ctx.send("Timeout")
             return
-        
-        # 2.3 Extract the part before "@"
-        splitter_i = email.find("@") # assert != -1
-        username = email[:splitter_i]
-
+          
         # 3.1 Create user on the server
         password = random_password()
         result = subprocess.run(['sudo', 'adduser', '--gecos', '', '--disabled-password', username], capture_output=True, text=True)
