@@ -58,20 +58,28 @@ async def hi(ctx):
         def check_instant_return(message):
             return message.author == ctx.author and not message.author.bot 
 
-        # 1. Request and receive user email and person_name
-        await ctx.send("Please provide your person name:")
         try: 
+            # 2-1. Request and receive person_name
+            await ctx.send("Please provide your person name:")
             person_name = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
             person_name = person_name.content
-
+            retry = 0
+            while not re.match(r'^[가-힣]{2,4}$', person_name) and retry < MAXIMUM_RETRY:
+                await ctx.send("Name must be in Korean: {}".format(person_name))
+                await ctx.send("Please provide your person name:")
+                person_name = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
+                person_name = person_name.content
+                retry += 1
+            
+            # 2-2-1. Request and receive user email
             await ctx.send("Please provide your UNIST email:")
             email_msg = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
             email = email_msg.content
 
-            # 2.1 Validate email
+            # 2-2-2. Validate email
             retry = 0
             while not re.match(r'^([\w.-]+)@unist\.ac\.kr$', email) and retry < MAXIMUM_RETRY:
-                await ctx.send("email must end with 'unist.ac.kr': {}".format(email))
+                await ctx.send("Email must end with 'unist.ac.kr': {}".format(email))
                 await ctx.send("Please provide your email:")
 
                 email_msg = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
@@ -83,19 +91,19 @@ async def hi(ctx):
                 await ctx.send(f"Invalid format of email: {email}")
                 return
             
-            
-            await ctx.send("Please provide your username for using in the server:")
-            username_msg = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
-            username = username_msg.content
-            
-            # 2.2 Validate username
-            # 2.2.1 Check if email already exists in DB
+            # 2-2-3. Check if email already exists in DB
             c.execute("SELECT * FROM users WHERE email=?", (email,))
             existing_user = c.fetchone()
             if existing_user:
                 await ctx.send(f"The user {email}({existing_user[0]}) is already enrolled.")
                 return
-
+            
+            # 2-3-1. Request and receive username
+            await ctx.send("Please provide your username for using in the server:")
+            username_msg = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
+            username = username_msg.content
+            
+            # 2-3-2. Validate username
             user_list = load_users_from_passwd()
 
             retry = 0
@@ -143,4 +151,5 @@ async def hi(ctx):
         await target_channel.send(f"User {username}(owned by {person_name} / {email}) has been created on {current_time}.")
     except Exception as e:
         print(e)
+        
 bot.run(TOKEN)
