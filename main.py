@@ -3,16 +3,17 @@ import smtplib, ssl
 from email.mime.text import MIMEText
 import sqlite3
 import discord, asyncio
+import data
 from discord.ext import commands
 from dotenv import load_dotenv
 from datetime import datetime
 
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-EMAIL_APP_KEY = os.getenv('EMAIL_KEY')
+TOKEN = data.DISCORD_TOKEN
+EMAIL_APP_KEY = data.EMAIL_KEY
 MAXIMUM_RETRY = 3
-BOT_NAME = "HeXA user creator#2001"
-TARGET_CHANNEL_ID = 1155130805975253094
+BOT_NAME = data.BOT_NAME
+TARGET_CHANNEL_ID = data.TARGET_CHANNEL_ID
 
 bot = commands.Bot(command_prefix='/', intents=None)
 client = discord.Client(intents=None)
@@ -29,13 +30,13 @@ def random_password():
 
 def send_email(email_addr, uid, password):
     context = ssl.create_default_context()
-    smtp = smtplib.SMTP_SSL('smtp.daum.net', 465, context=context)
-    smtp.login('apple0511h0511@daum.net', EMAIL_APP_KEY)
+    smtp = smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context)
+    smtp.login(data.SENDER_EMAIL, EMAIL_APP_KEY)
     msg = MIMEText('ID: {} \nPW: {}'.format(uid, password))
-    msg['From'] = 'admin@hexa.pro'
+    msg['From'] = data.SENDER_EMAIL
     msg['Subject'] = 'HeXA 서버 계정 생성 안내'
     msg['To'] = email_addr
-    smtp.sendmail('admin@hexa.pro', email_addr, msg.as_string())
+    smtp.sendmail(data.SENDER_EMAIL, email_addr, msg.as_string())
     smtp.quit()
     
 def load_users_from_passwd():
