@@ -51,6 +51,13 @@ def load_users_from_passwd():
         
     return user_list
     
+def check_username(user_name:str) -> bool:
+    if not user_name[0].isalpha():
+        return False
+    if not user_name.isalnum():
+        return False
+    return True
+
 
 @bot.command("계정주세요")
 async def hi(ctx):
@@ -107,8 +114,8 @@ async def hi(ctx):
             user_list = load_users_from_passwd()
 
             retry = 0
-            while username in user_list and retry < MAXIMUM_RETRY:
-                await ctx.send(f"Username {username} already exists.")
+            while username in user_list and retry < MAXIMUM_RETRY and not check_username(username):
+                await ctx.send(f"Cannot generate user with username \"{username}\"")
                 
                 username_msg = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
                 username = username_msg.content
