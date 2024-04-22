@@ -115,7 +115,7 @@ async def hi(ctx):
             user_list = load_users_from_passwd()
 
             retry = 0
-            while username in user_list and retry < MAXIMUM_RETRY and not check_username(username):
+            while retry < MAXIMUM_RETRY and (username in user_list or not check_username(username)):
                 await ctx.send(f"Cannot generate user with username \"{username}\"")
                 
                 username_msg = await bot.wait_for('message', timeout=60.0, check=check_instant_return)
