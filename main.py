@@ -152,7 +152,7 @@ async def hi(ctx):
             
         # 5. Print user info
         send_email(email, username, password)
-        await ctx.send(f"User {username}(owned by {person_name}) has been created on {current_time}!\nthe password was sent to {email}")
+        await ctx.send(f"User {username}(owned by {person_name}) has been created on {current_time}!\nthe password was sent to {email}.\n**You may have to check your spam mailbox.**")
         
         # After successfully creating the user and inserting into the DB
         target_channel = bot.get_channel(TARGET_CHANNEL_ID)
